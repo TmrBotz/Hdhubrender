@@ -108,11 +108,13 @@ async def get_post_links(post_url: str) -> dict:
                 continue
             if any(d in url for d in SKIP_DOMAINS):
                 continue
-            link_type = "watch" if any(w in label.lower() for w in ["watch", "player"]) else "download"
+            if any(w in label.lower() for w in ["watch", "player"]):
+                continue
+            if tag.name == "h4" and "episode" in label.lower():
+                continue
             links.append({
                 "label": label,
                 "url": url,
-                "type": link_type,
             })
 
     return {
