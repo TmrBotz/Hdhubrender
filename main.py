@@ -100,22 +100,29 @@ async def get_post_links(post_url: str) -> dict:
 
     # Download links from h3 + h4
     links = []
-    for tag in soup.find_all(["h3", "h4"]):
-        for a in tag.find_all("a", href=True):
-            url = a["href"]
-            label = a.get_text(strip=True)
-            if not url.startswith("http"):
-                continue
-            if any(d in url for d in SKIP_DOMAINS):
-                continue
-            if any(w in label.lower() for w in ["watch", "player"]):
-                continue
-            if tag.name == "h4" and "episode" in label.lower():
-                continue
-            links.append({
-                "label": label,
-                "url": url,
-            })
+    skip_episode_links = False
+
+    for tag in soup.find_all(["h2", "h3", "h4"]):
+        if tag.name == "h2" and "single episode" in tag.get_text(strip=True).lower():
+            skip_episode_links = True
+            continue
+        if skip_episode_links:
+            continue
+        if tag.name in ["h3", "h4"]:
+            for a in tag.find_all("a", href=True):
+                url = a["href"]
+                label = a.get_text(strip=True)
+                if not url.startswith("http"):
+                    continue
+                if any(d in url for d in SKIP_DOMAINS):
+                    continue
+                if any(w in label.lower() for w in ["watch", "player"]):
+                    continue
+                links.append({
+                    "label": label,
+                    "url": url,
+                    "type": "download",
+                })
 
     return {
         "post_url": post_url,
